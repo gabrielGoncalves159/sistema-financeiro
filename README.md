@@ -32,18 +32,18 @@ DATABASE_PASSWORD=sua_senha
 DATABASE_NAME=seu_banco_de_dados
 JWT_SECRET=sua_chave_secreta
 
-4. Executando o Projeto
-* Certifique-se de que o banco de dados PostgreSQL está em execução e configurado corretamente.
+## Executando o Projeto
+1. Certifique-se de que o banco de dados PostgreSQL está em execução e configurado corretamente.
 
-* Execute o projeto:
+2. Execute o projeto:
 ```bash
 npm run start:dev
 ```
-5. Endpoints
-- Autenticação
+## Endpoints
+1. Autenticação
 POST /auth/login: Realiza o login do usuário.
 
-- Usuários
+2. Usuários
 POST /user/register: Registra um novo usuário.
 
 GET /user/:id: Obtém um usuário pelo ID.
@@ -52,7 +52,7 @@ PUT /user/:id: Atualiza um usuário pelo ID.
 
 DELETE /user/:id: Exclui um usuário pelo ID.
 
-- Transações
+3. Transações
 POST /transaction: Cria uma nova transação.
 
 GET /transaction/balance/:userId: Obtém o saldo total de um usuário.
