@@ -1,27 +1,27 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
-import { User } from '../user/user.entity';
-import { Transaction } from 'src/modules/transaction/transaction.entity';
+import { User } from './user.entity';
+import { Transaction } from './transaction.entity';
 
 @Entity()
 export class Wallet {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id: number;
 
   @Column()
-  name!: string;
+  name: string;
 
   @ManyToOne(() => User, user => user.wallets)
-  userId!: User;
+  userId: User;
 
   @OneToMany(() => Transaction, transaction => transaction.sourceWallet)
-  transactions!: Transaction[];
+  transactions: Transaction[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  balance!: number;
+  balance: number;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date;
 }

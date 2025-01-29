@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Wallet } from '../wallet/wallet.entity';
-import { User } from '../user/user.entity';
+import { Wallet } from './wallet.entity';
+import { User } from './user.entity';
 
 export enum TypeTransaction {
   TRANSFER = 'transfer',
@@ -48,8 +48,8 @@ export class Transaction {
   status: StatusTransaction = StatusTransaction.ACTIVE
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date;
 }
