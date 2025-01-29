@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Wallet } from './wallet.entity';
 import { Repository } from 'typeorm';
-import { Transaction, TypeTransaction } from 'src/modules/transaction/transaction.entity';
+import { CreateTransactionDto } from '../transaction/dto/create-transaction-dto';
+import { Wallet } from 'src/entities/wallet.entity';
+import { Transaction, TypeTransaction } from 'src/entities/transaction.entity';
 
 @Injectable()
 export class WalletService {
@@ -59,28 +60,28 @@ export class WalletService {
         }
     }
 
-    async findWalletById(walletId: number): Promise<Wallet> {
-        const wallet = await this.walletRepository.findOne({ where: { id: walletId } });
+    async findWalletById(wallet: Wallet): Promise<Wallet> {
+        const walletFind = await this.walletRepository.findOne({ where: { id: wallet.id } });
         if (!wallet) {
-          throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+          throw new NotFoundException(`Wallet with ID ${walletFind} not found`);
         }
         return wallet;
     }
     
-    async updateWalletBalances(sourceWallet: Wallet | null, targetWallet: Wallet, amount: number, type: TypeTransaction): Promise<void> {
-        if (type === TypeTransaction.TRANSFER) {
-          sourceWallet!.balance = Number(sourceWallet!.balance) - amount;      
-          targetWallet.balance = Number(targetWallet!.balance) + amount;
-        } else if (type === TypeTransaction.INCOME) {
-          targetWallet.balance = Number(targetWallet!.balance) + amount;
-        } else if (type === TypeTransaction.EXPENSE) {
-          sourceWallet!.balance = Number(sourceWallet!.balance) - amount;
+    async updateWalletBalances(dto: CreateTransactionDto): Promise<void> {
+        if (dto.type === TypeTransaction.TRANSFER) {
+          dto.sourceWallet!.balance = Number(dto.sourceWallet!.balance) - dto.amount;      
+          dto.targetWallet.balance = Number(dto.targetWallet!.balance) + dto.amount;
+        } else if (dto.type === TypeTransaction.INCOME) {
+          dto.targetWallet.balance = Number(dto.targetWallet!.balance) + dto.amount;
+        } else if (dto.type === TypeTransaction.EXPENSE) {
+          dto.sourceWallet!.balance = Number(dto.sourceWallet!.balance) - dto.amount;
         }
     
-        if (sourceWallet) {
-          await this.walletRepository.save(sourceWallet);
+        if (dto.sourceWallet) {
+          await this.walletRepository.save(dto.sourceWallet);
         }
-        await this.walletRepository.save(targetWallet);
+        await this.walletRepository.save(dto.targetWallet);
     } 
 
     async revertWalletBalances(transaction: Transaction): Promise<void> {

@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StatusTransaction, Transaction, TypeTransaction } from './transaction.entity';
 import { Between, Connection, Repository } from 'typeorm';
-import { Wallet } from 'src/modules/wallet/wallet.entity';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 import { UserService } from 'src/modules/user/user.service';
+import { CreateTransactionDto } from './dto/create-transaction-dto';
+import { StatusTransaction, Transaction, TypeTransaction } from 'src/entities/transaction.entity';
+import { Wallet } from 'src/entities/wallet.entity';
 
 @Injectable()
 export class TransactionService {
@@ -16,44 +17,29 @@ export class TransactionService {
     private readonly connection: Connection,
   ) {}
 
-  async createTransaction(
-    amount: number,
-    category: string,
-    sourceWalletId: number | null,
-    targetWalletId: number,
-    userId: number,
-    type: TypeTransaction = TypeTransaction.TRANSFER,
-  ): Promise<Transaction> {
+  async createTransaction(dto: CreateTransactionDto): Promise<Transaction> {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       let sourceWallet: Wallet | null = null;
-      if (sourceWalletId) {
-        sourceWallet = await this.walletService.findWalletById(sourceWalletId);
+      if (dto.sourceWallet) {
+        sourceWallet = await this.walletService.findWalletById(dto.sourceWallet);
       }
 
-      const targetWallet = await this.walletService.findWalletById(targetWalletId);
-      const user = await this.userService.findUserById(userId);
+      const targetWallet = await this.walletService.findWalletById(dto.targetWallet);
+      const user = await this.userService.findUserById(dto.user);
 
       if (!targetWallet || !user) {
         throw new NotFoundException('Invalid target wallet or user ID');
       }
 
-      this.validateTransaction(sourceWallet, amount, type);
+      this.validateTransaction(dto);
 
-      const transaction = this.transactionRepository.create({
-        amount,
-        category,
-        type,
-        sourceWallet: sourceWallet || undefined,
-        targetWallet,
-        user,
-        status: StatusTransaction.ACTIVE,
-      });
+      const transaction = this.transactionRepository.create(dto);
 
-      await this.walletService.updateWalletBalances(sourceWallet, targetWallet, amount, type);
+      await this.walletService.updateWalletBalances(dto);
 
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
@@ -67,13 +53,13 @@ export class TransactionService {
     }
   }
 
-  private validateTransaction(sourceWallet: Wallet | null, amount: number, type: TypeTransaction): void {
-    if (sourceWallet) {
-      if (type === TypeTransaction.TRANSFER && sourceWallet.balance < amount) {
+  private validateTransaction(dto: CreateTransactionDto): void {
+    if (dto.sourceWallet) {
+      if (dto.type === TypeTransaction.TRANSFER && dto.sourceWallet.balance < dto.amount) {
         throw new BadRequestException('Insufficient balance in source wallet');
       }
     } else {
-      if (type === TypeTransaction.TRANSFER) {
+      if (dto.type === TypeTransaction.TRANSFER) {
         throw new BadRequestException('Source wallet is required for transfer transactions');
       }
     }
