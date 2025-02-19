@@ -10,11 +10,12 @@ export class Wallet {
   @Column()
   name: string;
 
-  @ManyToOne(() => User, user => user.wallets)
-  userId: User;
+  //TODO: Criar tabela controladora
+  // @ManyToOne(() => User, user => user.wallets)
+  // userId: User;
 
-  @OneToMany(() => Transaction, transaction => transaction.sourceWallet)
-  transactions: Transaction[];
+  // @OneToMany(() => Transaction, transaction => transaction.sourceWallet)
+  // transactions: Transaction[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   balance: number;

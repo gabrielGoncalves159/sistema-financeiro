@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinTable } from 'typeorm';
 import { Wallet } from './wallet.entity';
 import { User } from './user.entity';
 
@@ -28,10 +28,8 @@ export class Transaction {
   sourceWallet: Wallet | null = new Wallet;
 
   @ManyToOne(() => Wallet, wallet => wallet.transactions)
+  @JoinTable()
   targetWallet: Wallet = new Wallet;
-
-  @ManyToOne(() => User, user => user.id)
-  user: User = new User;
 
   @Column({
     type: 'enum',

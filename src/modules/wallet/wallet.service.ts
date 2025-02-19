@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { CreateTransactionDto } from '../transaction/dto/create-transaction-dto';
 import { Wallet } from 'src/entities/wallet.entity';
 import { Transaction, TypeTransaction } from 'src/entities/transaction.entity';
+import { CreateWalletDto } from './dto/create-wallet-dto';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class WalletService {
@@ -12,8 +14,9 @@ export class WalletService {
         private walletRepository: Repository<Wallet>,
     ) {}
 
-    async createWallet(name: string, userId: number): Promise<Wallet | null> {
-      const wallet = this.walletRepository.create({ name, balance: 0, userId: { id: userId } });
+    async createWallet(dto: CreateWalletDto): Promise<Wallet | null> {
+      const { name } = dto;
+      const wallet = this.walletRepository.create({ name });
       await this.walletRepository.save(wallet);
       return this.walletRepository.createQueryBuilder('wallet')
         .leftJoinAndSelect('wallet.userId', 'user')
@@ -21,9 +24,9 @@ export class WalletService {
         .getOne();
     }
 
-    async findAllWallet(userId: number): Promise<Wallet[]> {
-        return this.walletRepository.findBy({ userId: {id: userId}});
-    }
+    // async findAllWallet(userId: number): Promise<Wallet[]> {
+    //     return this.walletRepository.findBy({ userId: {id: userId}});
+    // }
 
     async findOneWallet(id: number): Promise<Wallet | null> {
         return this.walletRepository.findOne({where: {id}});
@@ -55,9 +58,9 @@ export class WalletService {
             throw new BadRequestException(`The wallet cannot be deleted because it contains a balance of ${wallet.balance}.`);
         }
 
-        if (wallet.transactions && wallet.transactions.length > 0) {
-            throw new BadRequestException(`Wallet with ID ${wallet.id} has associated transactions and cannot be deleted`);
-        }
+        // if (wallet.transactions && wallet.transactions.length > 0) {
+        //     throw new BadRequestException(`Wallet with ID ${wallet.id} has associated transactions and cannot be deleted`);
+        // }
     }
 
     async findWalletById(wallet: Wallet): Promise<Wallet> {
@@ -100,8 +103,8 @@ export class WalletService {
         await this.updateWallet(targetWallet.id, targetWallet);
     }
 
-    async getUserBalance(userId: number): Promise<number> {
-      const wallets = await this.walletRepository.find({ where: { userId: { id: userId } } });
-      return wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
-    }
+    // async getUserBalance(userId: number): Promise<number> {
+    //   const wallets = await this.walletRepository.find({ where: { userId: { id: userId } } });
+    //   return wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
+    // }
 }

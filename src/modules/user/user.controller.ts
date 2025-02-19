@@ -1,44 +1,64 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, UseGuards, Request  } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, Delete, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User, UserRole } from './user.entity';
-import { AuthService } from 'src/auth/shared/auth.service';
-import { JwtAuthGuard } from 'src/auth/shared/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { plainToInstance } from 'class-transformer';
+import { CreateUserDto } from './dto/create-user-dto';
+import { UpdateUserDto } from './dto/update-user-dto';
+import { UserDto } from './dto/user.dto';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+
+@ApiTags('users')
 @Controller('user')
-export class UserController {   
-  constructor(
-    private readonly userService: UserService,
-    private readonly authService: AuthService,
-  ) {}
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
   @Post('register')
-  async createUser(
-    @Body('name') name: string,
-    @Body('email') email: string,
-    @Body('password') password: string,
-    @Body('role') role: UserRole,
-  ): Promise<User> {
-    return this.userService.createUser(name, email, password, role);
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'User successfully registered', type: UserDto })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+  async createUser(@Body() dto: CreateUserDto): Promise<UserDto> {
+    const user = await this.userService.createUser(dto);
+    return plainToInstance(UserDto, user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async getUserById(@Param('id') id:number ): Promise<User | null> {
-    return this.userService.findUserById(id)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'User found', type: UserDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
+  async getUserById(@Param('id') id: number): Promise<UserDto> {
+    const user = await this.userService.getUserById(id);
+    return plainToInstance(UserDto, user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'User successfully updated', type: UserDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
   async updateUser(
     @Param('id') id: number,
-    @Body() updateData: Partial<User>,
-  ): Promise<User> {
-    return this.userService.updateUser(id, updateData);
+    @Body() updateData: UpdateUserDto,
+  ): Promise<UserDto> {
+    const user = await this.userService.updateUser(id, updateData);
+    return plainToInstance(UserDto, user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async deleteUser(@Param('id') id: number) : Promise<void> {
-    return this.userService.deleteUser(id)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'User successfully deleted' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
+  async deleteUser(@Param('id') id: number): Promise<void> {
+    await this.userService.deleteUser(id);
   }
 }

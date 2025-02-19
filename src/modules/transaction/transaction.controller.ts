@@ -1,7 +1,7 @@
 import { Body, Controller, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { Transaction, TypeTransaction } from './transaction.entity';
-import { JwtAuthGuard } from 'src/auth/shared/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/roles/roles.guard';
 
 @Controller('transaction')

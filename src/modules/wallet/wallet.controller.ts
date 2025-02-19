@@ -1,8 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, Request } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { Wallet } from './wallet.entity';
-import { JwtAuthGuard } from 'src/auth/shared/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { UserService } from '../user/user.service';
+import { CreateWalletDto } from './dto/create-wallet-dto';
+import { Wallet } from 'src/entities/wallet.entity';
+import { UpdateWalletDto } from './dto/update-wallet-dto';
+import { WalletDto } from './dto/waller-dto';
 
 @Controller('wallet')
 export class WalletController {
@@ -12,25 +15,23 @@ export class WalletController {
     @UseGuards(JwtAuthGuard)
     @Post()
     async createWallet(
-        @Body('name') name: string,
-        @Request() req: any,
+        @Body() dto: CreateWalletDto ,
     ) : Promise<Wallet | null> {
-        const user = await this.userService.findUserById(req.user.id);
-        return this.walletService.createWallet(name, user!.id);
+        return this.walletService.createWallet(dto);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @Get(':userId')
-    async getWalletsByUserId(@Param('userId') userId: number) : Promise<Wallet[]> {
-        return this.walletService.findAllWallet(userId);
-    }
+    // @UseGuards(JwtAuthGuard)
+    // @Get(':userId')
+    // async getWalletsByUserId(@Param('userId') userId: number) : Promise<Wallet[]> {
+    //     return this.walletService.findAllWallet(userId);
+    // }
 
     @UseGuards(JwtAuthGuard)
     @Put(':id')
     async updateWallet(
         @Param('id') id: number,
-        @Body() updateData: Partial<Wallet>
-    ) : Promise<Wallet> {
+        @Body() updateData: Partial<UpdateWalletDto>
+    ) : Promise<WalletDto> {
         return this.walletService.updateWallet(id, updateData);
     }
 
@@ -40,9 +41,9 @@ export class WalletController {
         return this.walletService.deleteWallet(id);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @Get('balance/:userId')
-    async getUserBalance(@Param('userId') userId: number): Promise<number> {
-      return this.walletService.getUserBalance(userId);
-    }
+    // @UseGuards(JwtAuthGuard)
+    // @Get('balance/:userId')
+    // async getUserBalance(@Param('userId') userId: number): Promise<number> {
+    //   return this.walletService.getUserBalance(userId);
+    // }
 }

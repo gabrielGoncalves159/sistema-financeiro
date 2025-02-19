@@ -22,16 +22,19 @@ export class TransactionService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+
     try {
-      let sourceWallet: Wallet | null = null;
-      if (dto.sourceWallet) {
-        sourceWallet = await this.walletService.findWalletById(dto.sourceWallet);
+      const {user, sourceWallet} = dto;
+      let sourceWalletFind: Wallet | null = null;
+
+      if (sourceWallet) {
+        sourceWalletFind = await this.walletService.findWalletById(dto.sourceWallet);
       }
 
       const targetWallet = await this.walletService.findWalletById(dto.targetWallet);
-      const user = await this.userService.findUserById(dto.user);
+      const userFind = await this.userService.getUserById(user.id);
 
-      if (!targetWallet || !user) {
+      if (!targetWallet || !userFind) {
         throw new NotFoundException('Invalid target wallet or user ID');
       }
 
@@ -39,7 +42,7 @@ export class TransactionService {
 
       const transaction = this.transactionRepository.create(dto);
 
-      await this.walletService.updateWalletBalances(dto);
+      await this.walletService.updateWalletBa1lances(dto);
 
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();

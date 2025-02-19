@@ -8,7 +8,4 @@ export class CreateWalletDto {
 
     @IsObject()
     user: User;
-
-    @IsNumber()
-    balance: number;
 }
