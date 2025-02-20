@@ -1,10 +1,10 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { StatusTransaction, TypeTransaction } from 'src/entities/transaction.entity';
+import { TypeTransaction, StatusTransaction } from 'src/entities/transaction.entity';
 import { User } from 'src/entities/user.entity';
 import { Wallet } from 'src/entities/wallet.entity';
 
-export class CreateTransactionDto {
+export class TransactionDto {
   @IsNumber({}, { message: 'Amount must be a number' })
   amount: number;
 
@@ -31,4 +31,12 @@ export class CreateTransactionDto {
 
   @IsEnum(StatusTransaction, { message: 'Status must be a valid transaction status' })
   status: StatusTransaction;
+
+  @IsNotEmpty({ message: 'Creation date cannot be empty' })
+  @Type(() => Date)
+  createdAt: Date;
+
+  @IsNotEmpty({ message: 'Update date cannot be empty' })
+  @Type(() => Date)
+  updatedAt: Date;
 }

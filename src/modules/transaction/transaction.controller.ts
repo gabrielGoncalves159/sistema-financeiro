@@ -1,63 +1,91 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { TransactionService } from './transaction.service';
-import { Transaction, TypeTransaction } from './transaction.entity';
+import { Controller, Post, Body, Get, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { RolesGuard } from 'src/roles/roles.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { TransactionService } from './transaction.service';
+import { CreateTransactionDto } from './dto/create-transaction-dto';
+import { TransactionDto } from './dto/transaction-dto';
+import { ReportService } from './services/report.service';
+import { WalletTransactionReportService } from './services/wallet-transaction-report.service';
+import { CategorySummaryService } from './services/category-summary.service';
 
-@Controller('transaction')
+@ApiTags('transactions')
+@Controller('transactions')
 export class TransactionController {
-    constructor(private readonly transactionService: TransactionService) {}
+  constructor(
+    private readonly transactionService: TransactionService,
+    private readonly reportService: ReportService,
+    private readonly walletTransactionReportService: WalletTransactionReportService,
+    private readonly categorySummaryService: CategorySummaryService,
+  ) {}
 
-    @UseGuards(JwtAuthGuard)
-    @Post()
-    async createTransaction(
-      @Body('amount') amount: number,
-      @Body('category') category: string,
-      @Body('sourceWalletId') sourceWalletId: number | null,
-      @Body('targetWalletId') targetWalletId: number,
-      @Body('userId') userId: number,
-      @Body('type') type: TypeTransaction,
-    ): Promise<Transaction> {
-      return this.transactionService.createTransaction(amount, category, sourceWalletId, targetWalletId, userId, type);
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Cancel a transaction' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Transaction successfully canceled.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
+  async createTransaction(@Body() dto: CreateTransactionDto): Promise<TransactionDto> {
+    return this.transactionService.createTransaction(dto);
+  }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('user/:userId')
-    async getAllTransactionByUser(@Param('userId') userId: number): Promise<Transaction[]> {
-      return this.transactionService.findAllTransactionByUser(userId);
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create a new transaction' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Transaction successfully created.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
+  async cancelTransaction(@Param('id') id: number): Promise<TransactionDto> {
+    return this.transactionService.cancelTransaction(id);
+  }
 
-    @UseGuards(JwtAuthGuard)
-    @Get('wallet/:walletId')
-    async getTransactionsByWalletId(
-      @Param('walletId') walletId: number,
-      @Param('user') userId: number
-    ): Promise<Transaction[]> {
-      return await this.transactionService.getTransactionsByWalletId(walletId, userId);
-    } 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transaction by ID' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Transaction found.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Transaction not found.' })
+  async getTransactionById(@Param('id') id: number): Promise<TransactionDto[]> {
+    return this.transactionService.findAllTransactionsByUser(id);
+  }
 
-    @UseGuards(JwtAuthGuard)
-    @Patch('cancel/:id')
-    async cancelTransaction(@Param('id') id: number): Promise<Transaction> {
-      return this.transactionService.cancelTransaction(id);
-    }
-  
-    @UseGuards(JwtAuthGuard)
-    @Get('statement/:userId')
-    async getTransactionStatement(
-      @Param('userId') userId: number,
-      @Query('startDate') startDate: string,
-      @Query('endDate') endDate: string,
-    ): Promise<any> {
-      return this.transactionService.getTransactionStatement(userId, new Date(startDate), new Date(endDate));
-    }
-  
-    @UseGuards(JwtAuthGuard)
-    @Get('category-summary/:userId')
-    async getCategorySummary(
-      @Param('userId') userId: number,
-      @Query('category') category?: string,
-    ): Promise<any> {
-      return this.transactionService.getCategorySummary(userId, category);
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post('statement')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transaction statement' })
+  @ApiResponse({ status: 200, description: 'Transaction statement generated.' })
+  async getTransactionStatement(
+    @Body('userId') userId: number,
+    @Body('startDate') startDate: Date,
+    @Body('endDate') endDate: Date,
+  ): Promise<any> {
+    return this.reportService.getTransactionStatement(userId, startDate, endDate);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('category-summary/:userId')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get category summary' })
+  @ApiResponse({ status: 200, description: 'Category summary generated.' })
+  async getCategorySummary(
+    @Param('userId') userId: number,
+    @Body('category') category?: string,
+  ): Promise<any> {
+    return this.categorySummaryService.getCategorySummary(userId, category);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('wallet/:walletId/user/:userId')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get transactions by wallet ID' })
+  @ApiResponse({ status: 200, description: 'Transactions found.' })
+  async getTransactionsByWalletId(
+    @Param('walletId') walletId: number,
+    @Param('userId') userId: number,
+  ): Promise<TransactionDto[]> {
+    return this.walletTransactionReportService.getTransactionsByWalletId(walletId, userId);
+  }
 }

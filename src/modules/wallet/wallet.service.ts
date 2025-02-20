@@ -1,54 +1,49 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CreateTransactionDto } from '../transaction/dto/create-transaction-dto';
 import { Wallet } from 'src/entities/wallet.entity';
 import { Transaction, TypeTransaction } from 'src/entities/transaction.entity';
 import { CreateWalletDto } from './dto/create-wallet-dto';
-import { User } from 'src/entities/user.entity';
+import { UpdateWalletDto } from './dto/update-wallet-dto';
+import { WalletDto } from './dto/waller-dto';
+import { plainToInstance } from 'class-transformer';
+import { WalletRepository } from './wallet.repository';
 
 @Injectable()
 export class WalletService {
     constructor(
         @InjectRepository(Wallet)
-        private walletRepository: Repository<Wallet>,
+        private walletRepository: WalletRepository,
     ) {}
 
-    async createWallet(dto: CreateWalletDto): Promise<Wallet | null> {
-      const { name } = dto;
-      const wallet = this.walletRepository.create({ name });
-      await this.walletRepository.save(wallet);
-      return this.walletRepository.createQueryBuilder('wallet')
-        .leftJoinAndSelect('wallet.userId', 'user')
-        .where('wallet.id = :id', { id: wallet.id })
-        .getOne();
+    async createWallet(dto: CreateWalletDto): Promise<WalletDto> {
+      const wallet = this.walletRepository.create(dto);
+      const savedWallet = this.walletRepository.save(wallet);
+      return plainToInstance(WalletDto, savedWallet);
     }
 
-    // async findAllWallet(userId: number): Promise<Wallet[]> {
-    //     return this.walletRepository.findBy({ userId: {id: userId}});
-    // }
-
-    async findOneWallet(id: number): Promise<Wallet | null> {
-        return this.walletRepository.findOne({where: {id}});
+    async getWalletById(id: number): Promise<WalletDto> {
+      const wallet = await this.walletRepository.findOne({ where: { id } });
+      if (!wallet) {
+        throw new NotFoundException(`Wallet with ID ${id} not found`);
+      }
+      return plainToInstance(WalletDto, wallet);
     }
 
-    async updateWallet(id: number, updateDataWallet: Partial<Wallet>): Promise<Wallet> {
-        const wallet = await this.findOneWallet(id);
-        if(!wallet) {
-            throw new NotFoundException(`Wallet with Id ${id} not found`)
-        }
-
-        Object.assign(wallet, updateDataWallet);
-        return this.walletRepository.save(wallet);
+    async updateWallet(id: number, updateData: UpdateWalletDto): Promise<WalletDto> {
+      const wallet = await this.getWalletById(id);
+      Object.assign(wallet, updateData);
+      const updatedWallet = await this.walletRepository.save(wallet);
+      return plainToInstance(WalletDto, updatedWallet);
     }
 
     async deleteWallet(id: number): Promise<void> {
-        const wallet = await this.findOneWallet(id);
-        this.validatorsWalletForDelete(wallet);
-        await this.walletRepository.delete(id);
+      const wallet = await this.getWalletById(id);
+      this.validatorsWalletForDelete(wallet);
+      await this.walletRepository.delete(id);
     }
 
-    validatorsWalletForDelete(wallet: Wallet | null): void {
+    validatorsWalletForDelete(wallet: WalletDto): void {
 
         if(!wallet) {
             throw new NotFoundException(`Wallet not found`)
@@ -57,18 +52,11 @@ export class WalletService {
         if(wallet.balance > 0) {
             throw new BadRequestException(`The wallet cannot be deleted because it contains a balance of ${wallet.balance}.`);
         }
-
-        // if (wallet.transactions && wallet.transactions.length > 0) {
-        //     throw new BadRequestException(`Wallet with ID ${wallet.id} has associated transactions and cannot be deleted`);
-        // }
     }
 
-    async findWalletById(wallet: Wallet): Promise<Wallet> {
-        const walletFind = await this.walletRepository.findOne({ where: { id: wallet.id } });
-        if (!wallet) {
-          throw new NotFoundException(`Wallet with ID ${walletFind} not found`);
-        }
-        return wallet;
+    async getBalanceWallet(id: number): Promise<number> {
+      const wallets = await this.walletRepository.find({ where: { id: id } });
+      return wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
     }
     
     async updateWalletBalances(dto: CreateTransactionDto): Promise<void> {
@@ -102,9 +90,4 @@ export class WalletService {
         await this.updateWallet(sourceWallet!.id, sourceWallet!);
         await this.updateWallet(targetWallet.id, targetWallet);
     }
-
-    // async getUserBalance(userId: number): Promise<number> {
-    //   const wallets = await this.walletRepository.find({ where: { userId: { id: userId } } });
-    //   return wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
-    // }
 }

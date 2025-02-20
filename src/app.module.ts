@@ -14,7 +14,7 @@ import { ConfigModule } from '@nestjs/config';
     UserModule,
     WalletModule,
     TransactionModule,
-    AuthModule
+    AuthModule,
   ],
 })
 export class AppModule {}

@@ -11,8 +11,15 @@ import { User } from 'src/entities/user.entity';
     TypeOrmModule.forFeature([User]),
     forwardRef(() => AuthModule),
   ],
-  providers: [UserService, UserRepository],
-  controllers: [UserController],
-  exports: [UserService],
+  providers: [
+    UserService, 
+    UserRepository
+  ],
+  controllers: [
+    UserController
+  ],
+  exports: [
+    UserService
+  ],
 })
 export class UserModule {}

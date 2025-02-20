@@ -1,53 +1,54 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinTable } from 'typeorm';
-import { Wallet } from './wallet.entity';
-import { User } from './user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from 'src/entities/user.entity';
+import { Wallet } from 'src/entities/wallet.entity';
 
 export enum TypeTransaction {
-  TRANSFER = 'transfer',
   INCOME = 'income',
   EXPENSE = 'expense',
+  TRANSFER = 'transfer',
 }
 
 export enum StatusTransaction {
-  ACTIVE = 1,
-  CANCELED = 0
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELED = 'canceled',
 }
 
-@Entity()
+@Entity('transactions')
 export class Transaction {
   @PrimaryGeneratedColumn()
-  id: number = 0;
+  id: number;
 
-  @Column()
-  amount: number = 0;
+  @Column({ type: 'enum', enum: TypeTransaction })
+  type: TypeTransaction;
 
-  @Column()
-  category: string = '';
+  @Column({ type: 'enum', enum: StatusTransaction, default: StatusTransaction.PENDING })
+  status: StatusTransaction;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  amount: number;
 
   @ManyToOne(() => Wallet, { nullable: true })
-  sourceWallet: Wallet | null = new Wallet;
+  sourceWallet: Wallet | null;
 
-  @ManyToOne(() => Wallet, wallet => wallet.transactions)
-  @JoinTable()
-  targetWallet: Wallet = new Wallet;
+  @ManyToOne(() => Wallet)
+  targetWallet: Wallet;
 
-  @Column({
-    type: 'enum',
-    enum: TypeTransaction,
-    default: TypeTransaction.TRANSFER,
-  })
-  type: TypeTransaction = TypeTransaction.TRANSFER;
+  @ManyToOne(() => User, { eager: true })
+  user: User;
 
-  @Column({
-    type: 'enum',
-    enum: StatusTransaction,
-    default: StatusTransaction.ACTIVE
-  })
-  status: StatusTransaction = StatusTransaction.ACTIVE
+  @Column({ type: 'text', nullable: true })
+  category: string;
 
-  @CreateDateColumn()
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
