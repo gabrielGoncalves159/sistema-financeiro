@@ -30,9 +30,9 @@ export class Wallet {
   @OneToMany(() => Transaction, transaction => transaction.targetWallet)
   incomingTransactions: Transaction[];
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

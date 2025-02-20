@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { Wallet } from 'src/entities/wallet.entity';
@@ -34,21 +35,24 @@ export class Transaction {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
-  @ManyToOne(() => Wallet, { nullable: true })
+  @ManyToOne(() => Wallet, wallet => wallet.outgoingTransactions, { nullable: true })
   sourceWallet: Wallet | null;
 
-  @ManyToOne(() => Wallet)
+  @ManyToOne(() => Wallet, wallet => wallet.incomingTransactions)
   targetWallet: Wallet;
 
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, user => user.transactions, { eager: true })
   user: User;
 
   @Column({ type: 'text', nullable: true })
   category: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

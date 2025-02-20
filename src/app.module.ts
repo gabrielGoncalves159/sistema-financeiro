@@ -9,7 +9,6 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [  
-    ConfigModule.forRoot({isGlobal: true}),
     TypeOrmModule.forRoot(config),
     UserModule,
     WalletModule,

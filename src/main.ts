@@ -10,7 +10,7 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(LoggerMiddleware)
+  // app.use(LoggerMiddleware)
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
     whitelist: true,
@@ -18,8 +18,8 @@ async function bootstrap() {
 
 
   const config = new DocumentBuilder()
-    .setTitle('My API')
-    .setDescription('API description')
+    .setTitle('Bank Transactions API')
+    .setDescription('')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
