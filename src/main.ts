@@ -15,8 +15,7 @@ async function bootstrap() {
     transform: true,
     whitelist: true,
   }));
-
-
+  
   const config = new DocumentBuilder()
     .setTitle('Bank Transactions API')
     .setDescription('')
