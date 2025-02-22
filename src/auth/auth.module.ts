@@ -6,16 +6,23 @@ import { UserModule } from '../modules/user/user.module';
 import { AuthController } from './auth.controller';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '60m' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '1h' },
+      }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, RolesGuard, JwtAuthGuard],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
   controllers: [AuthController],
   exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard],
 })

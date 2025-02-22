@@ -5,9 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { LoggerMiddleware } from './middlewares/logger.middlewares';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-dotenv.config();
 
-async function bootstrap() {
+async function bootstrap() {  
   const app = await NestFactory.create(AppModule);
 
   // app.use(LoggerMiddleware)
