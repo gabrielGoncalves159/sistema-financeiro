@@ -8,18 +8,26 @@ import { UpdateWalletDto } from './dto/update-wallet-dto';
 import { WalletDto } from './dto/waller-dto';
 import { plainToInstance } from 'class-transformer';
 import { WalletRepository } from './wallet.repository';
+import { User } from 'src/entities/user.entity';
+import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class WalletService {
     constructor(
         @InjectRepository(Wallet)
         private walletRepository: WalletRepository,
+        @InjectRepository(User)
+        private userRepository: UserRepository,
     ) {}
 
-    async createWallet(dto: CreateWalletDto): Promise<WalletDto> {
-      const wallet = this.walletRepository.create(dto);
-      const savedWallet = this.walletRepository.save(wallet);
-      return plainToInstance(WalletDto, savedWallet);
+    async createWallet(createWalletDto: CreateWalletDto): Promise<Wallet> {
+      const { name, userId } = createWalletDto;
+      const user = await this.userRepository.findOne({where: {id: userId}});
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+      const wallet = this.walletRepository.create({ name, user });
+      return this.walletRepository.save(wallet);
     }
 
     async getWalletById(id: number): Promise<WalletDto> {

@@ -1,12 +1,14 @@
-import { IsNotEmpty, IsObject, IsString } from 'class-validator';
-import { User } from 'src/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateWalletDto {
+  @ApiProperty({ description: 'The name of the user', example: 'Personal Wallet', })
   @IsString()
   @IsNotEmpty({ message: 'Name cannot be empty' })
   name: string;
 
-  @IsObject({ message: 'User must be a valid object' })
+  @ApiProperty({ description: 'The ID of the user associated with the wallet', example: 1, })
+  @IsNumber()
   @IsNotEmpty({ message: 'User cannot be empty' })
-  user: User;
+  userId: number;
 }

@@ -9,7 +9,6 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { Roles } from 'src/roles/roles.decorator';
 import { UserRole } from 'src/entities/user.entity';
 
-
 @ApiTags('users')
 @Controller('user')
 export class UserController {
@@ -47,10 +46,7 @@ export class UserController {
   @ApiResponse({ status: HttpStatus.OK, description: 'User successfully updated', type: UserDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-  async updateUser(
-    @Param('id') id: number,
-    @Body() updateData: UpdateUserDto,
-  ): Promise<UserDto> {
+  async updateUser(@Param('id') id: number, @Body() updateData: UpdateUserDto): Promise<UserDto> {
     const user = await this.userService.updateUser(id, updateData);
     return plainToInstance(UserDto, user);
   }

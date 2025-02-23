@@ -3,12 +3,12 @@ import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validato
 import { UserRole } from 'src/entities/user.entity';
 
 export class CreateUserDto {
-  @ApiProperty({ description: 'The name of the user', example: 'John Doe', })
+  @ApiProperty({ description: 'The name of the user', example: 'User Test', })
   @IsString()
   @IsNotEmpty({ message: 'Name cannot be empty' })
   name: string;
 
-  @ApiProperty({ description: 'The email address of the user', example: 'john.doe@example.com', })
+  @ApiProperty({ description: 'The email address of the user', example: 'user.teste@example.com', })
   @IsEmail({}, { message: 'Email must be a valid email address' })
   @IsNotEmpty({ message: 'Email cannot be empty' })
   email: string;

@@ -5,15 +5,19 @@ import { CreateWalletDto } from './dto/create-wallet-dto';
 import { UpdateWalletDto } from './dto/update-wallet-dto';
 import { WalletDto } from './dto/waller-dto';
 import { plainToInstance } from 'class-transformer';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Roles } from 'src/roles/roles.decorator';
+import { UserRole } from 'src/entities/user.entity';
 
+@ApiTags('wallets')
+@UseGuards(JwtAuthGuard)
 @Controller('wallet')
 export class WalletController {
     constructor(private readonly walletService: WalletService) {}
 
-    @UseGuards(JwtAuthGuard)
     @Post()
     @HttpCode(HttpStatus.CREATED)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Create a new wallet' })
     @ApiResponse({ status: HttpStatus.CREATED, description: 'Wallet successfully created.' })
     @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
@@ -22,7 +26,7 @@ export class WalletController {
         return plainToInstance(WalletDto, wallet);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @Roles(UserRole.ADMIN, UserRole.USER)
     @Get(':id')
     @HttpCode(HttpStatus.OK)
     @ApiBearerAuth()
@@ -34,7 +38,6 @@ export class WalletController {
         return plainToInstance(WalletDto, wallet);    
     }
 
-    @UseGuards(JwtAuthGuard)
     @Put(':id')
     @ApiBearerAuth()
     @HttpCode(HttpStatus.OK)
@@ -46,7 +49,6 @@ export class WalletController {
         return plainToInstance(WalletDto, wallet);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiBearerAuth()

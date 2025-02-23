@@ -4,6 +4,7 @@ import { User } from 'src/entities/user.entity';
 import { CreateUserDto } from './dto/create-user-dto';
 import { hashPassword } from 'src/utils/hash-password';
 import { UserRepository } from './user.repository';
+import { UpdateUserDto } from './dto/update-user-dto';
 
 
 @Injectable()
@@ -43,7 +44,7 @@ export class UserService {
     return user;
   }
   
-  async updateUser(id: number, updateData: Partial<User>): Promise<User> {
+  async updateUser(id: number, updateData: UpdateUserDto): Promise<User> {
     const user = await this.getUserById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

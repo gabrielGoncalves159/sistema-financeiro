@@ -1,15 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
-import { LoggerMiddleware } from './middlewares/logger.middlewares';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
 
 async function bootstrap() {  
   const app = await NestFactory.create(AppModule);
 
-  // app.use(LoggerMiddleware)
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
     whitelist: true,
