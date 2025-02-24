@@ -10,20 +10,20 @@ Este é um projeto de sistema financeiro desenvolvido com NestJS. O sistema perm
 
 ## Instalação
 
-1. Clone o repositório:
+### 1. Clone o repositório:
 
 ```bash
 git clone https://github.com/seu-usuario/projeto-billor.git
 cd projeto-billor
 ```
 
-2. Instale as dependências:
+### 2. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-3. Configure as variáveis de ambiente:
+### 3. Configure as variáveis de ambiente:
 
 DATABASE_HOST=localhost
 
@@ -45,11 +45,11 @@ JWT_SECRET=sua_chave_secreta
 npm run start:dev
 ```
 ## Endpoints
-1. Autenticação:
+#### 1. Autenticação:
    
 POST /auth/login: Realiza o login do usuário.
 
-3. Usuários:
+#### 2. Usuários:
    
 POST /user/register: Registra um novo usuário.
 
@@ -59,13 +59,25 @@ PUT /user/:id: Atualiza um usuário pelo ID.
 
 DELETE /user/:id: Exclui um usuário pelo ID.
 
-3. Transações:
+#### 3. Wallet:
+   
+POST /wallet: Registra uma nova carteira.
+
+GET /wallet/:id: Busca carteira por id.
+
+PUT /wallet/:id: Atualiza dados carteira.
+
+DELETE /wallet/:id: Exclui carteira.
+
+#### 4. Transações:
    
 POST /transaction: Cria uma nova transação.
 
-GET /transaction/balance/:userId: Obtém o saldo total de um usuário.
+POST /transaction/cancel/:id: Cancela transação
 
-GET /transaction/statement/:userId: Obtém o extrato de transações de um usuário.
+GET /transaction/balance/:Id: Obtém o saldo total de um usuário.
 
-GET /transaction/category-summary/:userId: Obtém o resumo de transações por categoria de um usuário.
+GET /transaction/statement/: Obtém o extrato de transações de um usuário.
+
+GET /transaction/category-summary/: Obtém o resumo de transações por categoria de um usuário.
 
