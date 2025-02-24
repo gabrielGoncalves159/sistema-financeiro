@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import { TypeTransaction, StatusTransaction } from 'src/entities/transaction.entity';
 import { User } from 'src/entities/user.entity';
 import { Wallet } from 'src/entities/wallet.entity';
+import { UserDto } from 'src/modules/user/dto/user.dto';
 
 export class TransactionDto {
   @IsNumber({}, { message: 'Amount must be a number' })
@@ -23,8 +24,8 @@ export class TransactionDto {
 
   @IsNotEmpty({ message: 'User cannot be empty' })
   @ValidateNested()
-  @Type(() => User)
-  user: User;
+  @Type(() => UserDto)
+  user: UserDto;
 
   @IsEnum(TypeTransaction, { message: 'Type must be a valid transaction type' })
   type: TypeTransaction;

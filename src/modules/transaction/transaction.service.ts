@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, DeepPartial } from 'typeorm';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 import { UserService } from 'src/modules/user/user.service';
 import { CreateTransactionDto } from './dto/create-transaction-dto';
@@ -8,12 +8,14 @@ import { StatusTransaction, Transaction, TypeTransaction } from 'src/entities/tr
 import { TransactionDto } from './dto/transaction-dto';
 import { plainToInstance } from 'class-transformer';
 import { TransactionRepository } from './transaction.repository';
+import { Wallet } from 'src/entities/wallet.entity';
+import { UserDto } from '../user/dto/user.dto';
 
 @Injectable()
 export class TransactionService {
   constructor(
+    @Inject(DataSource) private dataSource: DataSource,
     @InjectRepository(Transaction)
-    private dataSource: DataSource,
     private readonly transactionRepository: TransactionRepository,
     private readonly walletService: WalletService,
     private readonly userService: UserService,
@@ -25,20 +27,24 @@ export class TransactionService {
     await queryRunner.startTransaction();
 
     try {
-      const {user, targetWallet} = dto;
+      await this.walletService.updateWalletBalances(dto);
 
-      const walletFind = await this.walletService.getWalletById(targetWallet.id);
-      const userFind = await this.userService.getUserById(user.id);
+      const sourceWallet = await this.walletService.findWallet(dto.sourceWalletId);
+      const targetWallet = await this.walletService.findWallet(dto.targetWalletId);
+      const user = await this.userService.getUserById(dto.userId);
 
-      if (!walletFind || !userFind) {
-        throw new NotFoundException('Invalid target wallet or user ID');
+      if (!targetWallet || !user) {
+        throw new NotFoundException('Invalid user or target wallet ID');
       }
 
-      this.validateTransaction(dto);
-
-      const transaction = this.transactionRepository.create(dto);
-
-      await this.walletService.updateWalletBalances(dto);
+      const transactionData: DeepPartial<Transaction> = {
+        ...dto,
+        sourceWallet,
+        targetWallet,
+        user,      
+      };
+      
+      const transaction = this.transactionRepository.create(transactionData as Transaction);
 
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
@@ -49,18 +55,6 @@ export class TransactionService {
       throw error;
     } finally {
       await queryRunner.release();
-    }
-  }
-
-  private validateTransaction(dto: CreateTransactionDto): void {
-    if (dto.sourceWallet) {
-      if (dto.type === TypeTransaction.TRANSFER && dto.sourceWallet.balance < dto.amount) {
-        throw new BadRequestException('Insufficient balance in source wallet');
-      }
-    } else {
-      if (dto.type === TypeTransaction.TRANSFER) {
-        throw new BadRequestException('Source wallet is required for transfer transactions');
-      }
     }
   }
 
@@ -82,8 +76,13 @@ export class TransactionService {
 
   async findAllTransactionsByUser(userId?: number): Promise<TransactionDto[]> {
     const transactions = userId
-      ? await this.transactionRepository.find({ where: { user: { id: userId } } })
-      : await this.transactionRepository.find();
-    return transactions.map(transaction => plainToInstance(TransactionDto, transaction));
+      ? await this.transactionRepository.find({ where: { user: { id: userId } }, relations: ['user', 'sourceWallet', 'targetWallet'] })
+      : await this.transactionRepository.find({ relations: ['user', 'sourceWallet', 'targetWallet'] });
+  
+    return transactions.map(transaction => {
+      const transactionDto = plainToInstance(TransactionDto, transaction);
+      transactionDto.user = plainToInstance(UserDto, transaction.user);
+      return transactionDto;
+    });
   }
 }

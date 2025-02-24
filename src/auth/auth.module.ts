@@ -8,8 +8,6 @@ import { RolesGuard } from 'src/roles/roles.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
-
 @Module({
   imports: [
     forwardRef(() => UserModule),

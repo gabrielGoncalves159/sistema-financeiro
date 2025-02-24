@@ -1,17 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { Between } from 'typeorm';
 import { WalletService } from 'src/modules/wallet/wallet.service';
-import { TypeTransaction } from 'src/entities/transaction.entity';
 import { TransactionRepository } from '../transaction.repository';
+import { plainToInstance } from 'class-transformer';
+import { TypeTransaction } from 'src/entities/transaction.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Transaction } from 'src/entities/transaction.entity';
+import { GetTransactionStatementDto, TransactionResponseDto, TransactionStatementResponseDto } from '../dto/transaction-statement-dto ';
 
 @Injectable()
 export class ReportService {
   constructor(
+    @InjectRepository(Transaction)
     private readonly transactionRepository: TransactionRepository,
     private readonly walletService: WalletService,
   ) {}
 
-  async getTransactionStatement(userId: number, startDate: Date, endDate: Date): Promise<any> {
+  async getTransactionStatement(dto: GetTransactionStatementDto): Promise<TransactionStatementResponseDto> {
+    const { userId, startDate, endDate } = dto;
+
     const transactions = await this.transactionRepository.find({
       where: {
         user: { id: userId },
@@ -25,23 +32,27 @@ export class ReportService {
 
     const expenses = transactions
       .filter(t => t.type === TypeTransaction.EXPENSE)
-      .reduce((acc, t) => acc - t.amount, 0);
+      .reduce((acc, t) => acc + t.amount, 0);
 
-    const totalBalance = await this.walletService.getBalanceWallet(userId);
+    const totalBalance = await this.walletService.getTotalBalanceWalletByUser(userId);
 
-    return {
-      transactions: transactions.map(t => ({
-        id: t.id,
-        type: t.type,
-        amount: t.amount,
-        status: t.status,
-        category: t.category,
-        description: t.description,
-        createdAt: t.createdAt,
-      })),
+    const transactionResponseDtos = transactions.map(t => plainToInstance(TransactionResponseDto, {
+      id: t.id,
+      type: t.type,
+      amount: t.amount,
+      status: t.status,
+      category: t.category,
+      description: t.description,
+      createdAt: t.createdAt,
+    }));
+
+    const responseDto = plainToInstance(TransactionStatementResponseDto, {
+      transactions: transactionResponseDtos,
       totalIncome: income,
       totalExpenses: expenses,
       totalBalance,
-    };
+    });
+
+    return responseDto;
   }
 }

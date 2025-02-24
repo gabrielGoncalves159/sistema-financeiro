@@ -38,6 +38,10 @@ export class WalletService {
       return plainToInstance(WalletDto, wallet);
     }
 
+    async findWallet(id: number): Promise<Wallet | null> {
+      return await this.walletRepository.findOneBy({ id: id } );
+    }
+
     async updateWallet(id: number, updateData: UpdateWalletDto): Promise<WalletDto> {
       const wallet = await this.getWalletById(id);
       Object.assign(wallet, updateData);
@@ -62,40 +66,62 @@ export class WalletService {
         }
     }
 
-    async getBalanceWallet(id: number): Promise<number> {
-      const wallets = await this.walletRepository.find({ where: { id: id } });
+    async getTotalBalanceWalletByUser(userId: number): Promise<number> {
+      const wallets = await this.walletRepository.find({ where: { user: {id: userId} } });
       return wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
     }
     
     async updateWalletBalances(dto: CreateTransactionDto): Promise<void> {
-        if (dto.type === TypeTransaction.TRANSFER) {
-          dto.sourceWallet!.balance = Number(dto.sourceWallet!.balance) - dto.amount;      
-          dto.targetWallet.balance = Number(dto.targetWallet!.balance) + dto.amount;
-        } else if (dto.type === TypeTransaction.INCOME) {
-          dto.targetWallet.balance = Number(dto.targetWallet!.balance) + dto.amount;
-        } else if (dto.type === TypeTransaction.EXPENSE) {
-          dto.sourceWallet!.balance = Number(dto.sourceWallet!.balance) - dto.amount;
+      const {type, amount, targetWalletId, sourceWalletId} = dto;
+      
+      const sourceWallet = sourceWalletId ? await this.walletRepository.findOneBy( {id :sourceWalletId} ) : null;
+      const targetWallet = await this.walletRepository.findOne({ where: { id: targetWalletId } })
+
+      this.validateDataTransaction(type, sourceWallet, amount);
+
+      if (!targetWallet) {
+        throw new NotFoundException('Invalid target wallet');
+      }
+      
+      if(sourceWallet && type === TypeTransaction.TRANSFER) {
+        sourceWallet!.balance = Number(sourceWallet!.balance) - amount;      
+        targetWallet!.balance = Number(targetWallet!.balance) + amount;      
+        await this.walletRepository.save(sourceWallet!);
+        
+      } else if (type === TypeTransaction.EXPENSE) {
+        targetWallet!.balance = Number(targetWallet!.balance) - amount;
+      } else if(type === TypeTransaction.INCOME) {
+        targetWallet!.balance = Number(targetWallet!.balance) + amount;
+      }     
+      
+      await this.walletRepository.save(targetWallet!);
+    }
+
+    private validateDataTransaction(type: TypeTransaction, sourceWallet: Wallet|null, amount: number): void {
+      if (sourceWallet) {
+        if (type === TypeTransaction.TRANSFER && sourceWallet.balance < amount) {
+          throw new BadRequestException('Insufficient balance in source wallet');
         }
-    
-        if (dto.sourceWallet) {
-          await this.walletRepository.save(dto.sourceWallet);
+      } else {
+        if (type === TypeTransaction.TRANSFER) {
+          throw new BadRequestException('Source wallet is required for transfer transactions');
         }
-        await this.walletRepository.save(dto.targetWallet);
-    } 
+      }
+    }
 
     async revertWalletBalances(transaction: Transaction): Promise<void> {
         const { amount, type, sourceWallet, targetWallet } = transaction;
-    
-        if (type === TypeTransaction.TRANSFER) {
-          sourceWallet!.balance += amount;
-          targetWallet.balance -= amount;
-        } else if (type === TypeTransaction.INCOME) {
-          targetWallet.balance -= amount;
+
+        if(sourceWallet && type === TypeTransaction.TRANSFER) {
+          sourceWallet!.balance = Number(sourceWallet!.balance) + amount;
+          targetWallet!.balance = Number(targetWallet!.balance) - amount;      
+          await this.walletRepository.save(sourceWallet!);
+          
         } else if (type === TypeTransaction.EXPENSE) {
-          sourceWallet!.balance += amount;
+          targetWallet!.balance = Number(targetWallet!.balance) + amount;
+        } else if(type === TypeTransaction.INCOME) {
+          targetWallet!.balance = Number(targetWallet!.balance) - amount;
         }
-    
-        await this.updateWallet(sourceWallet!.id, sourceWallet!);
-        await this.updateWallet(targetWallet.id, targetWallet);
+        await this.walletRepository.save(targetWallet!);
     }
 }

@@ -1,8 +1,5 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { StatusTransaction, TypeTransaction } from 'src/entities/transaction.entity';
-import { User } from 'src/entities/user.entity';
-import { Wallet } from 'src/entities/wallet.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTransactionDto {
@@ -14,23 +11,21 @@ export class CreateTransactionDto {
   @IsString({ message: 'Category must be a string' })
   category: string;
 
-  @ApiProperty({ description: 'The source wallet for the transaction', example: { id: 1 }, })
+  @ApiProperty({ description: 'The source wallet for the transaction', example: 1, })
   @IsNotEmpty({ message: 'Source wallet cannot be empty' })
-  @ValidateNested()
-  @Type(() => Wallet)
-  sourceWallet: Wallet;
+  @IsOptional()
+  @IsNumber()
+  sourceWalletId: number;
 
-  @ApiProperty({ description: 'The target wallet for the transaction', example: { id: 2 }, })
+  @ApiProperty({ description: 'The target wallet for the transaction', example:  2, })
   @IsNotEmpty({ message: 'Target wallet cannot be empty' })
-  @ValidateNested()
-  @Type(() => Wallet)
-  targetWallet: Wallet;
+  @IsNumber()
+  targetWalletId: number;
 
-  @ApiProperty({ description: 'The type of the transaction', example: { id: 1 }, })
+  @ApiProperty({ description: 'The type of the transaction', example:  1, })
   @IsNotEmpty({ message: 'User cannot be empty' })
-  @ValidateNested()
-  @Type(() => User)
-  user: User;
+  @IsNumber()
+  userId: number;
 
   @ApiProperty({ description: 'The type of the transaction', example: 'expense', })
   @IsEnum(TypeTransaction, { message: 'Type must be a valid transaction type' })

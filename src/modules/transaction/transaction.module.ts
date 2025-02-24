@@ -7,7 +7,6 @@ import { TransactionRepository } from './transaction.repository';
 import { WalletModule } from '../wallet/wallet.module';
 import { UserModule } from '../user/user.module';
 import { ReportService } from './services/report.service';
-import { WalletTransactionReportService } from './services/wallet-transaction-report.service';
 import { CategorySummaryService } from './services/category-summary.service';
 
 @Module({
@@ -20,8 +19,8 @@ import { CategorySummaryService } from './services/category-summary.service';
   providers: [
     TransactionService, 
     ReportService,
-    WalletTransactionReportService,
     CategorySummaryService,
   ],
+  exports: [ReportService]
 })
 export class TransactionModule {}
